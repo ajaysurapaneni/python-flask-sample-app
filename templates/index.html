@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S3 File Operations</title>
+</head>
+<body>
+    <h2>Upload File to S3</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="file" required>
+        <button type="submit">Upload</button>
+    </form>
+
+    <h2>Files in S3 Bucket</h2>
+    <button onclick="loadFiles()">Refresh File List</button>
+    <ul id="fileList">
+        <!-- Files will be listed here -->
+    </ul>
+
+    <script>
+        const apiUrl = 'http://localhost:5000'; // Update to match the Flask server URL if different
+
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var formData = new FormData(this);
+            fetch(apiUrl + '/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                loadFiles(); // Refresh file list after upload
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        function deleteFile(filename) {
+            fetch(apiUrl + '/delete/' + encodeURIComponent(filename), {
+                method: 'DELETE',
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                loadFiles(); // Refresh file list after delete
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function loadFiles() {
+            fetch(apiUrl + '/files')
+                .then(response => response.json())
+                .then(files => {
+                    const fileList = document.getElementById('fileList');
+                    fileList.innerHTML = '';
+                    files.forEach(file => {
+                        const li = document.createElement('li');
+                        li.textContent = file + ' ';
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.textContent = 'Delete';
+                        deleteBtn.onclick = () => deleteFile(file);
+                        li.appendChild(deleteBtn);
+                        fileList.appendChild(li);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        loadFiles(); // Load files when the page loads
+    </script>
+</body>
+</html>
